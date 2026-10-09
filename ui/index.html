@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OmniAgent — Operator Workspace</title>
+    <link rel="stylesheet" href="/operator/styles.css" />
+  </head>
+  <body>
+    <div id="app" class="app-shell">
+      <aside class="sidebar" aria-label="Primary">
+        <div class="sidebar-brand">
+          <div class="brand-mark">OA</div>
+          <div>
+            <div class="brand-name">OmniAgent</div>
+            <div class="brand-sub">Autonomous workspace</div>
+          </div>
+        </div>
+
+        <nav class="nav-section" aria-label="Workspace">
+          <div class="nav-label">Workspace</div>
+          <a href="#/chat" class="nav-item" data-route="chat">
+            <span class="nav-icon">◧</span><span>Agent chat</span>
+          </a>
+          <a href="#/runs" class="nav-item" data-route="runs">
+            <span class="nav-icon">≡</span><span>Runs</span>
+          </a>
+          <a href="#/documents" class="nav-item" data-route="documents">
+            <span class="nav-icon">⬆</span><span>Knowledge Base</span>
+          </a>
+        </nav>
+
+        <nav class="nav-section" aria-label="Plane">
+          <div class="nav-label">Control plane</div>
+          <a href="#/connectors" class="nav-item" data-route="connectors">
+            <span class="nav-icon">⇆</span><span>Connectors</span>
+          </a>
+          <a href="#/models" class="nav-item" data-route="models">
+            <span class="nav-icon">◯</span><span>Models</span>
+          </a>
+          <a href="#/observability" class="nav-item" data-route="observability">
+            <span class="nav-icon">◔</span><span>Observability</span>
+          </a>
+          <a href="#/settings" class="nav-item" data-route="settings">
+            <span class="nav-icon">⚙</span><span>Settings</span>
+          </a>
+        </nav>
+
+        <div class="sidebar-foot">
+          <button class="ghost theme-toggle" id="theme-toggle" type="button" aria-label="Toggle theme">
+            <span id="theme-icon">◐</span><span id="theme-label">Light</span>
+          </button>
+          <div class="env-pill" id="env-pill" title="Active model provider">
+            <span class="env-dot"></span>
+            <span id="env-text">checking…</span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div class="crumbs">
+            <span id="crumb-section">Agent chat</span>
+            <span class="crumb-sep">/</span>
+            <span id="crumb-detail" class="muted">new run</span>
+          </div>
+          <div class="topbar-actions">
+            <button id="new-run-btn" class="ghost" type="button">+ New run</button>
+            <button id="share-btn" class="ghost" type="button" title="Copy permalink">↗ Share</button>
+          </div>
+        </header>
+
+        <section id="page-root" class="page-root" aria-live="polite"></section>
+
+        <div id="toast-rail" class="toast-rail" aria-live="assertive"></div>
+      </main>
+    </div>
+
+    <template id="tpl-chat">
+      <div class="chat-grid">
+        <section class="chat-stream">
+          <div class="chat-empty" id="chat-empty">
+            <div class="empty-mark">◌</div>
+            <h2>What should the agent build?</h2>
+            <p>Describe what you need in plain language. OmniAgent will pick the right tools — write files in a sandbox, run Python, ingest documents, build graphs, search the web, or render a static demo — and stream every step on the right.</p>
+            <div class="hint-grid">
+              <div class="hint-card">
+                <div class="hint-title">Build a static landing page for a coffee shop and preview it.</div>
+              </div>
+              <div class="hint-card">
+                <div class="hint-title">Write a Python script that prints the first 10 fibonacci numbers and run it.</div>
+              </div>
+              <div class="hint-card">
+                <div class="hint-title">Ingest this paragraph and build a knowledge graph from it.</div>
+              </div>
+              <div class="hint-card">
+                <div class="hint-title">Research three open-source agent frameworks and summarize trade-offs.</div>
+              </div>
+            </div>
+          </div>
+          <div id="chat-messages" class="chat-messages" hidden></div>
+          <form id="prompt-form" class="prompt-form">
+            <div class="rag-toolbar" id="rag-toolbar">
+              <label class="toggle rag-toggle">
+                <input type="checkbox" id="rag-toggle" />
+                <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                <span class="toggle-label">RAG mode</span>
+              </label>
+              <span id="rag-doc-count" class="rag-doc-count muted small">0 docs loaded</span>
+              <button type="button" id="rag-manage-btn" class="ghost small" title="Manage documents">Manage ↗</button>
+            </div>
+            <div id="rag-doc-selector" class="rag-doc-selector" hidden>
+              <span class="muted small">Filter docs:</span>
+              <div id="rag-doc-chips" class="rag-doc-chips"></div>
+            </div>
+            <div class="prompt-row">
+              <textarea id="prompt-input" rows="3" placeholder="Tell OmniAgent what to build or do — Shift+Enter for new line, Enter to send"></textarea>
+              <button id="prompt-send" type="submit">Send ↵</button>
+            </div>
+            <div class="prompt-foot muted small">
+              <span id="prompt-provider">azure_openai</span> · the agent decides which tools to call
+            </div>
+          </form>
+        </section>
+
+        <aside class="inspector" aria-label="Run inspector">
+          <div class="inspector-tabs">
+            <button class="tab is-active" data-tab="timeline">Timeline</button>
+            <button class="tab" data-tab="artifacts">Artifacts</button>
+            <button class="tab" data-tab="preview">Preview</button>
+            <button class="tab" data-tab="rag">RAG Context</button>
+            <button class="tab" data-tab="memory">Memory</button>
+            <button class="tab" data-tab="hooks">Hooks</button>
+            <button class="tab" data-tab="raw">Raw</button>
+          </div>
+          <div class="inspector-body">
+            <div id="tab-timeline" class="tab-pane is-active">
+              <div class="timeline-empty muted">Tool calls, hooks and middleware events will appear here as the agent works.</div>
+            </div>
+            <div id="tab-artifacts" class="tab-pane">
+              <div class="muted small">No files yet. Files the agent writes will show up here.</div>
+            </div>
+            <div id="tab-preview" class="tab-pane">
+              <div class="muted small">When the agent serves a static asset (e.g. index.html) it will be embedded here.</div>
+            </div>
+            <div id="tab-rag" class="tab-pane">
+              <div id="rag-context-pane" class="rag-context-pane">
+                <div class="muted small">RAG citations will appear here after a RAG query.</div>
+              </div>
+            </div>
+            <div id="tab-memory" class="tab-pane">
+              <div class="row between mb">
+                <span class="muted small">Recent memory entries</span>
+                <button class="ghost small" id="memory-refresh-btn" type="button">Refresh</button>
+              </div>
+              <div id="memory-entries" class="memory-list"><div class="muted small">Loading…</div></div>
+            </div>
+            <div id="tab-hooks" class="tab-pane">
+              <div class="row between mb">
+                <span class="muted small">Recent hook events</span>
+                <button class="ghost small" id="hooks-refresh-btn" type="button">Refresh</button>
+              </div>
+              <div id="hooks-entries" class="hooks-list"><div class="muted small">Loading…</div></div>
+            </div>
+            <div id="tab-raw" class="tab-pane">
+              <pre id="raw-json" class="raw-json muted">No run yet.</pre>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </template>
+
+    <template id="tpl-runs">
+      <div class="page">
+        <div class="page-head">
+          <h1>Recent runs</h1>
+          <p class="muted">Each run gets its own sandbox workspace. Open one to inspect files and re-render previews.</p>
+        </div>
+        <section class="card">
+          <div id="runs-list" class="recent-runs">No runs yet.</div>
+        </section>
+      </div>
+    </template>
+
+    <template id="tpl-connectors">
+      <div class="page">
+        <div class="page-head">
+          <h1>MCP connectors</h1>
+          <p class="muted">Connect OmniAgent to GitHub, GitLab, Linear, Slack, Notion or any custom MCP server. Secrets stay in environment variables.</p>
+        </div>
+        <section class="card">
+          <div class="row between">
+            <h3>Active connectors</h3>
+            <button id="add-custom-connector" type="button">+ Custom MCP server</button>
+          </div>
+          <div id="connector-list" class="connector-list"></div>
+        </section>
+        <section class="card">
+          <h3>Marketplace presets</h3>
+          <div id="connector-presets" class="preset-grid"></div>
+        </section>
+      </div>
+    </template>
+
+    <template id="tpl-models">
+      <div class="page">
+        <div class="page-head">
+          <h1>Model providers</h1>
+          <p class="muted">Pick the active provider used for chat, code workflow and operator runs.</p>
+        </div>
+        <section class="card">
+          <h3>Active selection</h3>
+          <div class="row gap">
+            <label class="grow">Provider
+              <select id="model-provider"></select>
+            </label>
+            <label class="grow">Model
+              <input type="text" id="model-name" placeholder="leave blank for provider default" />
+            </label>
+            <button id="save-model" type="button">Save</button>
+          </div>
+          <div id="azure-status" class="muted small"></div>
+        </section>
+
+        <section class="card">
+          <div class="row between">
+            <h3>Ollama discovery</h3>
+            <span class="muted small">Find local models served by Ollama.</span>
+          </div>
+          <div class="row gap">
+            <input type="text" id="ollama-url" value="http://localhost:11434" />
+            <button id="discover-ollama" type="button">Discover</button>
+          </div>
+          <div id="ollama-result" class="ollama-result muted small"></div>
+        </section>
+
+        <section class="card">
+          <h3>Available providers</h3>
+          <div id="provider-list" class="provider-grid"></div>
+        </section>
+      </div>
+    </template>
+
+    <template id="tpl-observability">
+      <div class="page">
+        <div class="page-head">
+          <h1>Observability</h1>
+          <p class="muted">SLIs, SLOs, alerts and runbook automation.</p>
+        </div>
+        <div class="cards two-col">
+          <section class="card">
+            <h3>Health snapshot</h3>
+            <div id="obs-stats" class="stat-grid"></div>
+            <button id="obs-refresh" class="ghost" type="button">Refresh</button>
+          </section>
+          <section class="card">
+            <h3>Alerts</h3>
+            <div id="obs-alerts" class="alert-list muted">No alerts.</div>
+          </section>
+        </div>
+      </div>
+    </template>
+
+    <template id="tpl-settings">
+      <div class="page">
+        <div class="page-head">
+          <h1>Settings</h1>
+          <p class="muted">Operator preferences, theme and telemetry.</p>
+        </div>
+        <div class="cards two-col">
+          <section class="card">
+            <h3>Appearance</h3>
+            <div class="row between">
+              <div>
+                <strong>Theme</strong>
+                <div class="muted small">System matches your OS. Light/Dark force a mode.</div>
+              </div>
+              <div class="seg" role="radiogroup" aria-label="Theme">
+                <button class="seg-item" data-theme-value="light">Light</button>
+                <button class="seg-item" data-theme-value="dark">Dark</button>
+                <button class="seg-item" data-theme-value="system">System</button>
+              </div>
+            </div>
+          </section>
+          <section class="card">
+            <h3>Agent budget</h3>
+            <label>Max tool iterations per run
+              <input type="number" id="max-iter-input" min="3" max="40" value="12" />
+            </label>
+            <label class="toggle mt">
+              <input type="checkbox" id="telemetry-toggle" />
+              <span class="toggle-track"><span class="toggle-thumb"></span></span>
+              <span class="toggle-label">Local telemetry opt-in</span>
+            </label>
+          </section>
+          <section class="card">
+            <h3>Maintenance</h3>
+            <div class="row gap">
+              <button id="reset-settings" class="ghost" type="button">Reset settings</button>
+              <button id="copy-config" class="ghost" type="button">Copy config JSON</button>
+            </div>
+            <pre id="settings-json" class="raw-json mt"></pre>
+          </section>
+        </div>
+      </div>
+    </template>
+
+    <template id="tpl-documents">
+      <div class="page">
+        <div class="page-head">
+          <h1>Knowledge Base</h1>
+          <p class="muted">Upload documents for RAG — the agent can answer questions grounded in your files.</p>
+        </div>
+
+        <section class="card">
+          <h3>Upload documents</h3>
+          <div id="upload-zone" class="upload-zone" tabindex="0" role="button" aria-label="Drop files here or click to choose">
+            <div class="upload-zone-icon">⬆</div>
+            <div class="upload-zone-label">Drop files here or <span class="link">click to choose</span></div>
+            <div class="upload-zone-hint muted small">PDF, DOCX, XLSX, PPTX, TXT, CSV, JSON, MD · max 50 MB each</div>
+            <input type="file" id="file-input" accept=".pdf,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.txt,.csv,.json,.md" multiple hidden />
+          </div>
+          <div id="upload-progress-list" class="upload-progress-list"></div>
+        </section>
+
+        <section class="card">
+          <div class="row between mb">
+            <h3>Uploaded documents</h3>
+            <button id="doc-refresh-btn" type="button" class="ghost">Refresh</button>
+          </div>
+          <div id="doc-list" class="doc-list">
+            <div class="muted small">No documents yet. Upload some above.</div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h3>Test RAG query</h3>
+          <div class="row gap">
+            <input type="text" id="rag-test-input" placeholder="Ask a question about your documents…" class="grow" />
+            <button id="rag-test-btn" type="button">Ask</button>
+          </div>
+          <div id="rag-test-result" class="rag-test-result mt" hidden></div>
+        </section>
+      </div>
+    </template>
+
+    <div id="modal-root" class="modal-root" hidden>
+      <div class="modal-backdrop" data-close></div>
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <header class="modal-head">
+          <h2 id="modal-title">Modal</h2>
+          <button class="ghost icon-only" data-close aria-label="Close">×</button>
+        </header>
+        <section id="modal-body" class="modal-body"></section>
+      </div>
+    </div>
+
+    <script src="/operator/app.js" defer></script>
+  </body>
+</html>
