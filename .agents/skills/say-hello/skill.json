@@ -1,0 +1,17 @@
+{
+  "name": "Say Hello",
+  "description": "Reusable workflow learned from autonomous run. Original request: Say hello Outcome: system: You are OmniAgent autonomous mode, inspired by OpenClaw, Claude Code, Codex, OpenClaude,",
+  "source": "autonomous_skill_creator",
+  "reference_urls": [
+    "https://github.com/openclaw/openclaw",
+    "https://github.com/anthropics/claude-code",
+    "https://github.com/openai/codex",
+    "https://github.com/Gitlawb/openclaude",
+    "https://github.com/nousresearch/hermes-agent"
+  ],
+  "files": [
+    "SKILL.md",
+    "references/index.md",
+    "scripts/run_skill.py"
+  ]
+}
