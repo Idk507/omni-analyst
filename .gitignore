@@ -1,0 +1,6 @@
+.omni_memory/
+.omni_workspaces/
+.browser-artifacts/
+.env
+__pycache__/
+*.pyc
