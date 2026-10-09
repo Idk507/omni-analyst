@@ -1,0 +1,21 @@
+services:
+  omniagent:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./.omni_memory:/app/.omni_memory
+      - ./.browser-artifacts:/app/.browser-artifacts
+    environment:
+      - PYTHONUNBUFFERED=1
+      - OMNI_SEMANTIC_CACHE_BACKEND=${OMNI_SEMANTIC_CACHE_BACKEND:-json}
+      - OMNI_SEMANTIC_CACHE_PATH=${OMNI_SEMANTIC_CACHE_PATH:-.omni_memory/semantic_cache.json}
+      - OMNI_REDIS_URL=${OMNI_REDIS_URL:-redis://redis:6379}
+      - OMNI_BROWSER_ARTIFACT_DIR=${OMNI_BROWSER_ARTIFACT_DIR:-.browser-artifacts}
+      - OMNI_WORKER_MODE=${OMNI_WORKER_MODE:-in_process}
+
+  redis:
+    image: redis:7-alpine
+    profiles: ["external-cache"]
+    ports:
+      - "6379:6379"
