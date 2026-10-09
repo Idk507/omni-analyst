@@ -1,0 +1,8 @@
+Metadata-Version: 2.4
+Name: omni-analyst
+Version: 0.1.0
+Summary: OmniAnalyst v5 runtime scaffold
+Requires-Python: >=3.11
+Requires-Dist: fastapi
+Requires-Dist: uvicorn[standard]
+Requires-Dist: pydantic>=2.6
