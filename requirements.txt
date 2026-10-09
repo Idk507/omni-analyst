@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+pydantic>=2.6
+httpx
+PyMuPDF
+pillow
+pytesseract
+python-docx
+openpyxl
+python-pptx
+networkx
+faiss-cpu
+playwright
+ddgs
+langextract
