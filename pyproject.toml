@@ -1,0 +1,35 @@
+[project]
+name = "omni-analyst"
+version = "0.1.0"
+description = "OmniAnalyst v5 runtime scaffold"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi",
+  "uvicorn[standard]",
+  "pydantic>=2.6",
+  "httpx",
+  "PyMuPDF",
+  "pillow",
+  "pytesseract",
+  "python-docx",
+  "openpyxl",
+  "python-pptx",
+  "networkx",
+  "faiss-cpu",
+  "playwright",
+  "ddgs",
+  "langextract",
+]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["omni_analyst*"]
+
+[tool.pyrefly]
+python-interpreter-path = "C:/Users/dhanu/miniconda3/python.exe"
+site-package-path = ["C:/Users/dhanu/miniconda3/Lib/site-packages"]
+search-path = ["."]
+
